@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var cassandra = require('cassandra-driver');
 var app = express();
+var port = 8080;
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -40,4 +41,7 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+app.listen(port,function(){
+  console.log("app is listening on port : " + port);
+});
 module.exports = app;

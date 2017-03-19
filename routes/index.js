@@ -50,14 +50,21 @@ router.post('/deposit',function(req,res,next){
 
 
 //RETRIEVE THE SPECIFIC FILE FROM CASSANDRA DB. FIRST MATCHING ROW ONLY.
-router.post('/retrieve',function(req,res,next){
-  console.log('retrieving the file: ' + req.body.filename);
+router.get('/retrieve',function(req,res,next){
+  console.log("req.query: "+ JSON.stringify(req.query));
+  var filename;
+  if(req.query.filename){
+    filename = req.query.filename;
+  }else{
+    filename = req.body.filename;
+  }
+  console.log('retrieving the file: ' + filename);
   //check if params we need are provided.
-  if(!req.body.filename){
+  if(!filename){
     return res.json({'status':'ERROR','message': 'missing necessary parameters'});
   }
   // else query db for filename
-  client.execute(query_retrieve_file,[req.body.filename],function(err,result){
+  client.execute(query_retrieve_file,[filename],function(err,result){
     if(err){
       console.log(err);
       return res.json({'status':'ERROR', 'message': 'retrieval failed'});
@@ -66,7 +73,7 @@ router.post('/retrieve',function(req,res,next){
     var retrievedRow = result.rows[0];
     var jsoContents = JSON.parse(retrievedRow.contents); //converted from blob to text in select query.
     const buf = Buffer.from(jsoContents.binarydata);
-    var filepath = "/data/"+req.body.filename;
+    var filepath = "/data/"+ filename;
 
     //log statements
     console.log("extracted retrievedRow from db: " + JSON.stringify(retrievedRow));
