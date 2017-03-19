@@ -30,9 +30,11 @@ router.post('/deposit',function(req,res,next){
   if(req.body.filename && req.body.contents){
     filename = req.body.filename;
     contents = req.body.contents;
+    console.log('received post thru body:'+filename + "\tcontents:" + contents);
   }else if(req.params.filename && req.params.contents){
     filename = req.params.filename;
     contents = req.params.contents;
+    console.log('received post thru params:'+filename + "\tcontents:" + contents);
   }else{
     return res.json({'status':'ERROR', 'message': 'missing necessary parameters'});
   }
@@ -76,6 +78,10 @@ router.get('/retrieve',function(req,res,next){
     if(err){
       console.log(err);
       return res.json({'status':'ERROR', 'message': 'retrieval failed'});
+    }
+    if(!result){
+      console.log("retrieval of "+filename + " is empty");
+      return res.json({'status':'ERROR','message':'could not retrieve from database'});
     }
     //Successfully retrieved a result, process first matching row.
     var retrievedRow = result.rows[0];
