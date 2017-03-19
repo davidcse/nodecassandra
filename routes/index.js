@@ -79,7 +79,7 @@ router.get('/retrieve',function(req,res,next){
       console.log(err);
       return res.json({'status':'ERROR', 'message': 'retrieval failed'});
     }
-    if(!result){
+    if(!result.rows){
       console.log("retrieval of "+filename + " is empty");
       return res.json({'status':'ERROR','message':'could not retrieve from database'});
     }
