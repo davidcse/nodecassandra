@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var cassandra = require('cassandra-driver');
 var fs = require('fs');
+var mkdirp = require('mkdirp');
 
 //CONNECT TO CASSANDRA FOR USE FOR THE INDEX MODULE
 var client = new cassandra.Client({contactPoints:['127.0.0.1']});
@@ -80,6 +81,20 @@ router.get('/retrieve',function(req,res,next){
     console.log("extracted jsoContents from db: " + JSON.stringify(jsoContents));
     console.log('writing to file:' + filepath);
     console.log("with contents : " + buf.toString());
+
+    //check data folder existence, else create it. 
+    fs.stat('/data',function(err,stat){
+      if(err == null){
+        return; //exists
+      }else if(err.code == 'ENOENT'){
+        mkdirp('/data', function(err){
+          if(err){
+            console.log("error creating data folder");
+            return res.json({"status":"ERROR", "message":"Server failed to create /data"});
+          }
+        }); 
+      }
+    });
     fs.writeFile(filepath, buf, 'binary', function(err){
       if(err){
         console.log(err);
