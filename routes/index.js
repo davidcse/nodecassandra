@@ -82,7 +82,7 @@ router.get('/retrieve',function(req,res,next){
     console.log('writing to file:' + filepath);
     console.log("with contents : " + buf.toString());
 
-    //check data folder existence, else create it. 
+    //check data folder existence, else create it.
     fs.stat('/data',function(err,stat){
       if(err == null){
         return; //exists
@@ -92,7 +92,7 @@ router.get('/retrieve',function(req,res,next){
             console.log("error creating data folder");
             return res.json({"status":"ERROR", "message":"Server failed to create /data"});
           }
-        }); 
+        });
       }
     });
     fs.writeFile(filepath, buf, 'binary', function(err){
@@ -100,7 +100,10 @@ router.get('/retrieve',function(req,res,next){
         console.log(err);
         return res.json({"status":"ERROR", "message": "Server could not write to file"})
       }
-      console.log('finished writing to file, sent to client');
+      console.log('finished writing to file, sending to client');
+      if(!filename.includes(".txt")){
+        res.setHeader('content-type', 'image');
+      }
       return res.sendFile(filepath);
     });
   });
