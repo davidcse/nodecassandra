@@ -79,12 +79,13 @@ router.get('/retrieve',function(req,res,next){
       console.log(err);
       return res.json({'status':'ERROR', 'message': 'retrieval failed'});
     }
-    if(!result.rows){
+
+    //Successfully retrieved a result, process first matching row.
+    var retrievedRow = result.rows[0];
+    if(jsoContents){
       console.log("retrieval of "+filename + " is empty");
       return res.json({'status':'ERROR','message':'could not retrieve from database'});
     }
-    //Successfully retrieved a result, process first matching row.
-    var retrievedRow = result.rows[0];
     var jsoContents = JSON.parse(retrievedRow.contents); //converted from blob to text in select query.
     const buf = Buffer.from(jsoContents.binarydata);
     var filepath = "/data/"+ filename;
