@@ -82,7 +82,7 @@ router.get('/retrieve',function(req,res,next){
 
     //Successfully retrieved a result, process first matching row.
     var retrievedRow = result.rows[0];
-    if(jsoContents){
+    if(!retrievedRow.contents){
       console.log("retrieval of "+filename + " is empty");
       return res.json({'status':'ERROR','message':'could not retrieve from database'});
     }
