@@ -3,6 +3,8 @@ var router = express.Router();
 var cassandra = require('cassandra-driver');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
+let multer = require('multer');
+let upload  = multer({ storage: multer.memoryStorage() });
 
 //CONNECT TO CASSANDRA FOR USE FOR THE INDEX MODULE
 var client = new cassandra.Client({contactPoints:['127.0.0.1']});
@@ -20,25 +22,22 @@ var query_retrieve_file = "SELECT blobAsText(contents) as contents FROM hw4.imgs
 //SEND USER TO HOMEPAGE
 router.get('/', function(req, res, next) {
   console.log("encountered user at index /");
-  res.render('index', { title: 'Express' });
+  res.render('index', { title: 'NodeCassandra' });
 });
 
+
 //DEPOSIT USER FILE CONTENTS INTO CASSANDRA DB
-router.post('/deposit',function(req,res,next){
-  var filename, contents;
-  //check if provided necessary parameters in post body
-  if(req.body.filename && req.body.contents){
-    filename = req.body.filename;
-    contents = req.body.contents;
-    console.log('received post thru body:'+filename + "\tcontents:" + contents);
-  }else if(req.params("filename") && req.params("contents")){
-    filename = req.params("filename");
-    contents = req.params("contents");
-    console.log('received post thru params:'+filename + "\tcontents:" + contents);
-  }else{
+router.post('/deposit',upload.single("contents"),function(req,res,next){
+  if(!req.body.filename || !req.file){
     return res.json({'status':'ERROR', 'message': 'missing necessary parameters'});
   }
-
+  var filename = req.body.filename;
+  var contents = req.file; //multipart form-data encoding
+  console.log("START___________________________________________")
+  console.log("filename is : " + req.body.filename);
+  console.log("file contents : \n");
+  console.log(req.file);
+  console.log("END___________________________________________")
   console.log('depositing file:' + filename + "\tcontents:" + JSON.stringify(contents));
   //generate unique id for this insert statement
   var id = cassandra.types.uuid();
@@ -87,39 +86,44 @@ router.get('/retrieve',function(req,res,next){
       return res.json({'status':'ERROR','message':'could not retrieve from database'});
     }
     var jsoContents = JSON.parse(retrievedRow.contents); //converted from blob to text in select query.
-    const buf = Buffer.from(jsoContents.binarydata);
+    var multipartFileObject = jsoContents.binarydata;
+    var mimetype = multipartFileObject.mimetype;
+    const buf = Buffer.from(multipartFileObject.buffer);
     var filepath = "/data/"+ filename;
 
     //log statements
     console.log("extracted retrievedRow from db: " + JSON.stringify(retrievedRow));
     console.log("extracted jsoContents from db: " + JSON.stringify(jsoContents));
+    console.log("extracted mutlipartFileObject from jsoContents: " + JSON.stringify(multipartFileObject));
     console.log('writing to file:' + filepath);
-    console.log("with contents : " + buf.toString());
+    console.log("buf contents : " + buf.toString());
+    res.setHeader("content-type",mimetype);
+    res.status(200).end(buf);
 
     //check data folder existence, else create it.
-    fs.stat('/data',function(err,stat){
-      if(err == null){
-        return; //exists
-      }else if(err.code == 'ENOENT'){
-        mkdirp('/data', function(err){
-          if(err){
-            console.log("error creating data folder");
-            return res.json({"status":"ERROR", "message":"Server failed to create /data"});
-          }
-        });
-      }
-    });
-    fs.writeFile(filepath, buf, 'binary', function(err){
-      if(err){
-        console.log(err);
-        return res.json({"status":"ERROR", "message": "Server could not write to file"})
-      }
-      console.log('finished writing to file, sending to client');
-      if(!filename.includes(".txt")){
-        res.setHeader('content-type', 'image');
-      }
-      return res.sendFile(filepath);
-    });
+    // fs.stat('/data',function(err,stat){
+    //   if(err == null){
+    //     return; //exists
+    //   }else if(err.code == 'ENOENT'){
+    //     mkdirp('/data', function(err){
+    //       if(err){
+    //         console.log("error creating data folder");
+    //         return res.json({"status":"ERROR", "message":"Server failed to create /data"});
+    //       }
+    //     });
+    //   }
+    // });
+    // fs.writeFile(filepath, buf, 'binary', function(err){
+    //   if(err){
+    //     console.log(err);
+    //     return res.json({"status":"ERROR", "message": "Server could not write to file"})
+    //   }
+    //   console.log('finished writing to file, sending to client');
+    //   if(!filename.includes(".txt")){
+    //     res.setHeader('content-type', 'image');
+    //   }
+    //   return res.sendFile(filepath);
+    // });
   });
 });
 
