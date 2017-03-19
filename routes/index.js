@@ -25,27 +25,34 @@ router.get('/', function(req, res, next) {
 
 //DEPOSIT USER FILE CONTENTS INTO CASSANDRA DB
 router.post('/deposit',function(req,res,next){
-  console.log('depositing file:' + req.body.filename + "\tcontents length:" + req.body.contents);
+  var filename, contents;
   //check if provided necessary parameters in post body
-  if(!req.body.filename || !req.body.contents){
+  if(req.body.filename && req.body.contents){
+    filename = req.body.filename;
+    contents = req.body.contents;
+  }else if(req.params.filename && req.params.contents){
+    filename = req.params.filename;
+    contents = req.params.contents;
+  }else{
     return res.json({'status':'ERROR', 'message': 'missing necessary parameters'});
   }
 
+  console.log('depositing file:' + filename + "\tcontents:" + JSON.stringify(contents));
   //generate unique id for this insert statement
   var id = cassandra.types.uuid();
   // wrap binary data into json, then convert to text.
   var contentWrapper = JSON.stringify({
-    'binarydata' : req.body.contents
+    'binarydata' : contents
   });
   //tell client to execute insert statement, with injected parameters.
-  client.execute(query_insert_file,[id, req.body.filename, contentWrapper],function(err,result){
+  client.execute(query_insert_file,[id, filename, contentWrapper],function(err,result){
     if(err){
       console.log(err);
       return res.json({'status':'ERROR', 'message': 'deposit failed'});
     }
     console.log('finished successful depositing');
     return res.json({'status':'OK','message':'deposit  successful'});
-  })
+  });
 });
 
 
