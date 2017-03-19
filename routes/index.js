@@ -31,9 +31,9 @@ router.post('/deposit',function(req,res,next){
     filename = req.body.filename;
     contents = req.body.contents;
     console.log('received post thru body:'+filename + "\tcontents:" + contents);
-  }else if(req.params.filename && req.params.contents){
-    filename = req.params.filename;
-    contents = req.params.contents;
+  }else if(req.params("filename") && req.params("contents")){
+    filename = req.params("filename");
+    contents = req.params("contents");
     console.log('received post thru params:'+filename + "\tcontents:" + contents);
   }else{
     return res.json({'status':'ERROR', 'message': 'missing necessary parameters'});
